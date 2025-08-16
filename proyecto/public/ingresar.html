@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ingresar empleado</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Nuevo empleado</h2>
+    <form id="f">
+      <label>Nombre</label>
+      <input name="nombre" required />
+      <label>Apellido</label>
+      <input name="apellido" required />
+      <label>DNI</label>
+      <input name="dni" required />
+      <label>Área</label>
+      <input name="area" required />
+      <button>Guardar</button>
+    </form>
+  </div>
+  <script>
+    const form = document.getElementById('f');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      const res = await fetch('/api/employees', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+      if (res.ok) { alert('Guardado'); form.reset(); }
+      else { const j = await res.json().catch(()=>({message:'Error'})); alert(j.message); }
+    });
+  </script>
+</body>
+</html>

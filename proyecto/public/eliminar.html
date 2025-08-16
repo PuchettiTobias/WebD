@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Eliminar empleado</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Eliminar empleado</h2>
+    <form id="f">
+      <label>DNI a eliminar</label>
+      <input name="dni" required />
+      <button>Eliminar</button>
+    </form>
+  </div>
+  <script>
+    const f = document.getElementById('f');
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const dni = new FormData(f).get('dni');
+      if (!confirm('¿Seguro que querés eliminar el DNI ' + dni + '?')) return;
+      const res = await fetch('/api/employees/' + encodeURIComponent(dni), { method: 'DELETE' });
+      if (res.ok) alert('Eliminado'); else alert('No encontrado / Error');
+    });
+  </script>
+</body>
+</html>

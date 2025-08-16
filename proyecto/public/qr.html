@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mi QR</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container center">
+    <h2>Identificación personal</h2>
+    <div id="info"></div>
+    <p><img id="qr" alt="QR" /></p>
+    <p class="small">Escaneá este código para verificar identidad.</p>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const dni = params.get('dni');
+    if (!dni) { document.body.innerHTML = 'Falta DNI'; throw new Error('Falta DNI'); }
+
+    fetch('/api/employees/' + encodeURIComponent(dni)).then(async r => {
+      if (!r.ok) throw new Error('No existe');
+      const emp = await r.json();
+      document.getElementById('info').innerHTML =
+        `<h3>${emp.nombre} ${emp.apellido}</h3><p>DNI: <strong>${emp.dni}</strong> – Área: ${emp.area}</p>`;
+      document.getElementById('qr').src = '/api/qrcode/' + encodeURIComponent(emp.dni) + '.png';
+    }).catch(() => {
+      document.body.innerHTML = '<div class="container">No existe la cuenta</div>';
+    });
+  </script>
+</body>
+</html>

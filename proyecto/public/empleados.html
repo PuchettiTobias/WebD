@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Empleados</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Listado de empleados</h2>
+    <table class="table" id="tabla">
+      <thead>
+        <tr><th>DNI</th><th>Nombre</th><th>Apellido</th><th>Área</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <script type="module">
+    const tbody = document.querySelector('#tabla tbody');
+    fetch('/api/employees')
+      .then(r => r.json())
+      .then(rows => {
+        tbody.innerHTML = rows.map(r =>
+          `<tr><td>${r.dni}</td><td>${r.nombre}</td><td>${r.apellido}</td><td>${r.area}</td></tr>`
+        ).join('');
+      })
+      .catch(()=> alert('Error cargando empleados'));
+  </script>
+</body>
+</html>

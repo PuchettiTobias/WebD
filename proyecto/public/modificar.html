@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Modificar empleado</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Modificar empleado</h2>
+    <form id="buscar">
+      <label>DNI a buscar</label>
+      <input name="dni" required />
+      <button>Buscar</button>
+    </form>
+
+    <hr />
+
+    <form id="editar" style="display:none">
+      <label>Nombre</label>
+      <input name="nombre" required />
+      <label>Apellido</label>
+      <input name="apellido" required />
+      <label>Área</label>
+      <input name="area" required />
+      <button>Guardar cambios</button>
+    </form>
+  </div>
+
+  <script>
+    const fBuscar = document.getElementById('buscar');
+    const fEditar = document.getElementById('editar');
+    let currentDni = null;
+
+    fBuscar.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const dni = new FormData(fBuscar).get('dni');
+      const res = await fetch('/api/employees/' + encodeURIComponent(dni));
+      if (!res.ok) return alert('No encontrado');
+      const emp = await res.json();
+      currentDni = emp.dni;
+      fEditar.style.display = '';
+      fEditar.nombre.value = emp.nombre;
+      fEditar.apellido.value = emp.apellido;
+      fEditar.area.value = emp.area;
+    });
+
+    fEditar.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(fEditar).entries());
+      const res = await fetch('/api/employees/' + encodeURIComponent(currentDni), {
+        method: 'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)
+      });
+      if (res.ok) alert('Modificado'); else alert('Error');
+    });
+  </script>
+</body>
+</html>
