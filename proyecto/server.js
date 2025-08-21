@@ -6,7 +6,7 @@ const QRCode = require('qrcode');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const HOST = '127.0.0.10'; // solicitado
+const HOST = '127.0.0.10'; 
 
 // Middlewares
 app.use(bodyParser.json());
@@ -25,7 +25,7 @@ db.serialize(() => {
   )`);
 });
 
-// Rutas básicas
+// Ruta básica
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -56,7 +56,7 @@ app.get('/api/employees', (req, res) => {
     res.json(rows);
   });
 });
-
+//mostrar
 app.get('/api/employees/:dni', (req, res) => {
   db.get('SELECT * FROM employees WHERE dni = ?', [req.params.dni], (err, row) => {
     if (err) return res.status(500).json({ ok: false });
@@ -64,7 +64,7 @@ app.get('/api/employees/:dni', (req, res) => {
     res.json(row);
   });
 });
-
+//ingresar
 app.post('/api/employees', (req, res) => {
   const { nombre, apellido, dni, area } = req.body;
   if (!nombre || !apellido || !dni || !area) return res.status(400).json({ ok: false, message: 'Faltan datos' });
@@ -77,7 +77,7 @@ app.post('/api/employees', (req, res) => {
     res.json({ ok: true });
   });
 });
-
+//modificar
 app.put('/api/employees/:dni', (req, res) => {
   const { nombre, apellido, area } = req.body;
   const dni = req.params.dni;
@@ -87,7 +87,7 @@ app.put('/api/employees/:dni', (req, res) => {
     res.json({ ok: true });
   });
 });
-
+//eliminar
 app.delete('/api/employees/:dni', (req, res) => {
   db.run('DELETE FROM employees WHERE dni = ?', [req.params.dni], function (err) {
     if (err) return res.status(500).json({ ok: false, message: 'Error al eliminar' });
@@ -121,3 +121,4 @@ app.get('/api/qrcode/:dni.png', (req, res) => {
 app.listen(PORT, HOST, () => {
   console.log(`Servidor escuchando en http://${HOST}:${PORT}`);
 });
+
