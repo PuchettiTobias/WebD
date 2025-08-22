@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Llegada</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+    <link rel="stylesheet" href="/style.css">
+
+</head>
+<body>
+    <div class="container">
+  <h1>Registro de Llegada</h1>
+
+  <!-- Botón para activar cámara -->
+  <button onclick="iniciarEscaneo()">Escanear QR</button>
+
+  <!-- Contenedor para lector QR -->
+  <div id="reader"></div>
+
+  <!-- Tabla empleados -->
+  <h2>Empleados y hora de llegada</h2>
+  <table id="tablaLlegadas">
+    <thead>
+      <tr>
+        <th>DNI</th>
+        <th>Hora de llegada</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let scanner;
+
+    // 👉 Cargar llegadas al entrar
+    window.onload = async function() {
+      const res = await fetch("/llegadas");
+      const data = await res.json();
+      data.forEach(l => agregarFila(l.dni, l.hora));
+    };
+
+    function iniciarEscaneo() {
+      if (scanner) {
+        scanner.clear();
+      }
+      scanner = new Html5Qrcode("reader");
+
+      scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        qrCodeMessage => {
+          registrarLlegada(qrCodeMessage);
+          scanner.delay();
+          document.getElementById("reader").innerHTML = "";
+        },
+        errorMessage => {
+          // errores de lectura ignorados
+        }
+      );
+    }
+
+    async function registrarLlegada(dni) {
+      const hora = new Date().toLocaleTimeString();
+
+      // Guardar en backend
+      await fetch("/registrar-llegada", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dni: dni, hora: hora })
+      });
+
+      // Agregar en tabla directamente
+      agregarFila(dni, hora);
+    }
+
+    function agregarFila(dni, hora) {
+      const tbody = document.querySelector("#tablaLlegadas tbody");
+      const fila = document.createElement("tr");
+      fila.innerHTML = `<td>${dni}</td><td>${hora}</td>`;
+      tbody.appendChild(fila);
+    }
+  </script>
+  </div>
+</body>
+</html>
