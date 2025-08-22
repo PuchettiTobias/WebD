@@ -25,6 +25,7 @@ db.serialize(() => {
   )`);
 });
 
+
 // Ruta básica
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -117,8 +118,20 @@ app.get('/api/qrcode/:dni.png', (req, res) => {
   });
 });
 
+app.post("/registrar-llegada", (req, res) => {
+  const { dni, hora } = req.body;
+
+  db.run("INSERT INTO llegadas (dni, hora) VALUES (?, ?)", [dni, hora], function(err) {
+    if (err) {
+      return res.status(500).send("Error guardando llegada");
+    }
+    res.send("Llegada registrada");
+  });
+});
+
 // Arranque del servidor en 127.0.0.10
 app.listen(PORT, HOST, () => {
   console.log(`Servidor escuchando en http://${HOST}:${PORT}`);
 });
+
 
