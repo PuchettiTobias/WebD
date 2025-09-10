@@ -6,7 +6,6 @@ const QRCode = require('qrcode');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const HOST = '127.0.0.10'; 
 
 // Middlewares
 app.use(bodyParser.json());
@@ -129,9 +128,9 @@ app.post("/registrar-llegada", (req, res) => {
   });
 });
 
-// Arranque del servidor en 127.0.0.10
-app.listen(PORT, HOST, () => {
-  console.log(`Servidor escuchando en http://${HOST}:${PORT}`);
+// Arranque del servidor
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Servidor escuchando en http://0.0.0.0:${PORT}`);
 });
 
 
