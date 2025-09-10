@@ -6,6 +6,7 @@ const QRCode = require('qrcode');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = '127.0.0.10'; 
 
 // Middlewares
 app.use(bodyParser.json());
@@ -22,8 +23,14 @@ db.serialize(() => {
     apellido TEXT NOT NULL,
     area TEXT NOT NULL
   )`);
+  // Nueva tabla para los registros de llegada
+  db.run(`CREATE TABLE IF NOT EXISTS llegadas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    dni TEXT NOT NULL,
+    hora TEXT NOT NULL,
+    FOREIGN KEY(dni) REFERENCES employees(dni)
+  )`);
 });
-
 
 // Ruta básica
 app.get('/', (req, res) => {
@@ -102,13 +109,8 @@ app.get('/api/qrcode/:dni.png', (req, res) => {
   db.get('SELECT * FROM employees WHERE dni = ?', [dni], async (err, row) => {
     if (err || !row) return res.status(404).send('No encontrado');
     try {
-      // Contenido del QR: JSON con dni, nombre, apellido y timestamp
-      const payload = JSON.stringify({
-        dni: row.dni,
-        nombre: row.nombre,
-        apellido: row.apellido,
-        ts: Date.now()
-      });
+      // El QR ahora contiene el DNI como texto plano.
+      const payload = row.dni;
       res.type('png');
       await QRCode.toFileStream(res, payload, { width: 300, margin: 1 });
     } catch (e) {
@@ -117,20 +119,31 @@ app.get('/api/qrcode/:dni.png', (req, res) => {
   });
 });
 
+// Nueva ruta para registrar la llegada
 app.post("/registrar-llegada", (req, res) => {
   const { dni, hora } = req.body;
-
   db.run("INSERT INTO llegadas (dni, hora) VALUES (?, ?)", [dni, hora], function(err) {
     if (err) {
+      console.error(err.message);
       return res.status(500).send("Error guardando llegada");
     }
-    res.send("Llegada registrada");
+    res.send("Llegada registrada con éxito");
   });
 });
 
-// Arranque del servidor
+// Nueva ruta para obtener todas las llegadas
+app.get("/llegadas", (req, res) => {
+  db.all("SELECT * FROM llegadas ORDER BY id DESC", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ ok: false, message: "Error de base de datos" });
+    }
+    res.json(rows);
+  });
+});
+
+// Arranque del servidor en 127.0.0.10
 app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Servidor escuchando en http://0.0.0.0:${PORT}`);
+  console.log(`Servidor escuchando en http://0.0.0.0:${PORT}`);
 });
 
 
