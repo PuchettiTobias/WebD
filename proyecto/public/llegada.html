@@ -11,13 +11,10 @@
     <div class="container">
   <h1>Registro de Llegada</h1>
 
-  <!-- Botón para activar cámara -->
   <button onclick="iniciarEscaneo()">Escanear QR</button>
 
-  <!-- Contenedor para lector QR -->
   <div id="reader"></div>
 
-  <!-- Tabla empleados -->
   <h2>Empleados y hora de llegada</h2>
   <table id="tablaLlegadas">
     <thead>
@@ -49,9 +46,14 @@
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         qrCodeMessage => {
-          registrarLlegada(qrCodeMessage);
-          scanner.delay();
-          document.getElementById("reader").innerHTML = "";
+          // El QR ahora es solo el DNI como texto.
+          const dni = qrCodeMessage;
+          if (dni) {
+            registrarLlegada(dni);
+            scanner.stop();
+          } else {
+            console.error("QR no contiene DNI");
+          }
         },
         errorMessage => {
           // errores de lectura ignorados
@@ -60,7 +62,7 @@
     }
 
     async function registrarLlegada(dni) {
-      const hora = new Date().toLocaleTimeString();
+      const hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
       // Guardar en backend
       await fetch("/registrar-llegada", {
@@ -77,9 +79,9 @@
       const tbody = document.querySelector("#tablaLlegadas tbody");
       const fila = document.createElement("tr");
       fila.innerHTML = `<td>${dni}</td><td>${hora}</td>`;
-      tbody.appendChild(fila);
+      tbody.prepend(fila); // Agrega al principio para que se vea primero la más reciente
     }
   </script>
-  </div>
+    </div>
 </body>
-</html>
+</html> 
