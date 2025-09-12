@@ -6,7 +6,6 @@ const QRCode = require('qrcode');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const HOST = '127.0.0.10'; 
 
 // Middlewares
 app.use(bodyParser.json());
@@ -26,7 +25,8 @@ db.serialize(() => {
   // Nueva tabla para los registros de llegada
   db.run(`CREATE TABLE IF NOT EXISTS llegadas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    dni TEXT NOT NULL,
+    nombre TEXT NOT NULL,
+    apellido TEXT NOT NULL,
     hora TEXT NOT NULL,
     FOREIGN KEY(dni) REFERENCES employees(dni)
   )`);
@@ -109,8 +109,7 @@ app.get('/api/qrcode/:dni.png', (req, res) => {
   db.get('SELECT * FROM employees WHERE dni = ?', [dni], async (err, row) => {
     if (err || !row) return res.status(404).send('No encontrado');
     try {
-      // El QR ahora contiene el DNI como texto plano.
-      const payload = row.dni;
+      const payload = `${row.nombre} ${row.apellido}`;
       res.type('png');
       await QRCode.toFileStream(res, payload, { width: 300, margin: 1 });
     } catch (e) {
@@ -118,6 +117,7 @@ app.get('/api/qrcode/:dni.png', (req, res) => {
     }
   });
 });
+
 
 // Nueva ruta para registrar la llegada
 app.post("/registrar-llegada", (req, res) => {
@@ -141,7 +141,9 @@ app.get("/llegadas", (req, res) => {
   });
 });
 
-// Arranque del servidor en 127.0.0.10
+// Arranque del servidor
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Servidor escuchando en http://0.0.0.0:${PORT}`);
 });
+
+
