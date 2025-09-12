@@ -4,84 +4,110 @@
   <meta charset="UTF-8">
   <title>Registro de Llegada</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
-    <link rel="stylesheet" href="/style.css">
-
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <div class="container">
-  <h1>Registro de Llegada</h1>
+  <div class="container">
+    <h1>Registro de Llegada</h1>
 
-  <button onclick="iniciarEscaneo()">Escanear QR</button>
+    <button onclick="iniciarEscaneo()">Escanear QR</button>
+    <div id="reader"></div>
 
-  <div id="reader"></div>
+    <h2>Empleados y hora de llegada</h2>
+    <table id="tablaLlegadas">
+      <thead>
+        <tr>
+          <th>Empleado</th>
+          <th>Hora de llegada</th>
+          <th>Tiempo en el establecimiento</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-  <h2>Empleados y hora de llegada</h2>
-  <table id="tablaLlegadas">
-    <thead>
-      <tr>
-        <th>DNI</th>
-        <th>Hora de llegada</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <script>
+      let scanner;
+      const cronometros = {}; // Guarda cronómetros por DNI
 
-  <script>
-    let scanner;
+      // Cargar llegadas al entrar
+      window.onload = async function() {
+        const res = await fetch("/llegadas");
+        const data = await res.json();
+        data.forEach(l => agregarFila(l.dni, l.hora));
+      };
 
-    // 👉 Cargar llegadas al entrar
-    window.onload = async function() {
-      const res = await fetch("/llegadas");
-      const data = await res.json();
-      data.forEach(l => agregarFila(l.dni, l.hora));
-    };
-
-    function iniciarEscaneo() {
-      if (scanner) {
-        scanner.clear();
-      }
-      scanner = new Html5Qrcode("reader");
-
-      scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        qrCodeMessage => {
-          // El QR ahora es solo el DNI como texto.
-          const dni = qrCodeMessage;
-          if (dni) {
-            registrarLlegada(dni);
-            scanner.stop();
-          } else {
-            console.error("QR no contiene DNI");
-          }
-        },
-        errorMessage => {
-          // errores de lectura ignorados
+      function iniciarEscaneo() {
+        if (scanner) {
+          scanner.clear();
         }
-      );
-    }
+        scanner = new Html5Qrcode("reader");
 
-    async function registrarLlegada(dni) {
-      const hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+        scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          qrCodeMessage => {
+            const dni = qrCodeMessage;
+            if (dni) {
+              registrarLlegada(dni);
+              scanner.stop();
+            } else {
+              console.error("QR no contiene DNI");
+            }
+          },
+          errorMessage => {
+            // errores de lectura ignorados
+          }
+        );
+      }
 
-      // Guardar en backend
-      await fetch("/registrar-llegada", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dni: dni, hora: hora })
-      });
+      async function registrarLlegada(dni) {
+        const hora = new Date().toLocaleTimeString('es-AR', { 
+          hour: '2-digit', minute: '2-digit', second: '2-digit' 
+        });
 
-      // Agregar en tabla directamente
-      agregarFila(dni, hora);
-    }
+        // Guardar en backend
+        await fetch("/registrar-llegada", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dni: dni, hora: hora })
+        });
 
-    function agregarFila(dni, hora) {
-      const tbody = document.querySelector("#tablaLlegadas tbody");
-      const fila = document.createElement("tr");
-      fila.innerHTML = `<td>${dni}</td><td>${hora}</td>`;
-      tbody.prepend(fila); // Agrega al principio para que se vea primero la más reciente
-    }
-  </script>
-    </div>
+        // Agregar en tabla directamente
+        agregarFila(dni, hora);
+      }
+
+      function formatearTiempo(segundosTotales) {
+        const horas = String(Math.floor(segundosTotales / 3600)).padStart(2, '0');
+        const minutos = String(Math.floor((segundosTotales % 3600) / 60)).padStart(2, '0');
+        const segundos = String(segundosTotales % 60).padStart(2, '0');
+        return `${horas}:${minutos}:${segundos}`;
+      }
+
+      function agregarFila(dni, hora) {
+        const tbody = document.querySelector("#tablaLlegadas tbody");
+        const fila = document.createElement("tr");
+
+        // Crear celda de tiempo con ID único
+        const idTiempo = `tiempo-${dni}-${Date.now()}`;
+
+        fila.innerHTML = `
+          <td>${dni}</td>
+          <td>${hora}</td>
+          <td id="${idTiempo}">00:00:00</td>
+        `;
+
+        tbody.prepend(fila);
+
+        // Iniciar cronómetro para esta fila
+        let segundos = 0;
+        cronometros[idTiempo] = setInterval(() => {
+          segundos++;
+          document.getElementById(idTiempo).innerText = formatearTiempo(segundos);
+        }, 1000);
+      }
+    </script>
+  </div>
 </body>
-</html> 
+</html>
+
+
